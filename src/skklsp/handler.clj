@@ -27,8 +27,8 @@
 (defn input-key [key]
   (println "input-key" @input-queue key)
   (let [prev-inpt (apply str @input-queue)
-        _ (swap! input-queue #(conj % key))
-        inpt (apply str @input-queue)
+        inpt (->> (swap! input-queue #(conj % key))
+                  (apply str))
         res (c.kana/kana-rule inpt)
         candidate-count (if res
                           1
