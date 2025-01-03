@@ -2,7 +2,8 @@
   (:require
    [clojure.tools.logging :as log]
    [clojure.java.io :as io]
-   [clojure.data.json :as json])
+   [clojure.data.json :as json]
+   [skklsp.handler :as c.handler])
   (:import
    [java.net ServerSocket]
    [java.io InputStream OutputStream])
@@ -42,8 +43,19 @@
                (read->string input-stream (parse-long len)))
         _ (println "Body:" body)]
     (when-not (nil? body)         ; nil indicates EOF
-      (let [parsed (json/read-str body :key-fn keyword)]
-        (println "Parsed:" parsed))
+      (let [parsed (json/read-str body :key-fn keyword)
+            _ (println "Parsed:" parsed)
+            res (c.handler/invoke parsed)
+            _ (println "Response:" res)
+            res-str (json/write-str res)
+            _ (println "ResponseStr:" res-str)
+            res-bytes (. res-str getBytes)]
+        (when res
+          (. output-stream write (.. (format "Content-Length: %d\r\n" (count res-bytes))
+                                     getBytes))
+          (. output-stream write (. "\r\n" getBytes))
+          (. output-stream write res-bytes)
+          (. output-stream flush)))
       (recur input-stream output-stream))))
 
 (defn start-server [port]
