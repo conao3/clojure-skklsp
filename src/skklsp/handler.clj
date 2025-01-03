@@ -1,5 +1,6 @@
 (ns skklsp.handler
   (:require
+   [clojure.core.match :as match]
    [skklsp.subr :as c.subr]))
 
 (def PARSE_ERROR -32700)
@@ -19,24 +20,12 @@
 (defn shutdown [_req]
   {:result nil})
 
-(defn workspace--executeCommand [{:keys [params output-stream]}]
+(defn workspace--executeCommand [{:keys [params]}]
   (let [{:keys [command arguments]} params]
     (case command
       "inputKey"
-      (let [[file key] arguments]
-        (-> output-stream
-            (c.subr/write-json
-             (c.subr/json-rpc-obj
-              {:id (swap! request-id inc)
-               :method "workspace/applyEdit"
-               :params
-               {:edit
-                {:changes
-                 {file [{:range
-                         {:start {:line 1 :character 1}
-                          :end {:line 1 :character 1}}
-                         :newText key}]}}}})))
-        {:result nil})
+      (let [[key] arguments]
+        {:result [{:command "insert" :arguments [key]}]})
       (do
         (println "executeCommand" "unknown command" command)
         nil))))
