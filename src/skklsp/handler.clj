@@ -1,7 +1,9 @@
 (ns skklsp.handler
   (:require
    [clojure.core.match :as match]
-   [skklsp.subr :as c.subr]))
+   [clojure.string :as str]
+   [skklsp.subr :as c.subr]
+   [skklsp.kana :as c.kana]))
 
 (def PARSE_ERROR -32700)
 (def INVALID_REQUEST -32600)
@@ -20,12 +22,35 @@
 (defn shutdown [_req]
   {:result nil})
 
+(def input-queue (atom []))
+
+(defn input-key [key]
+  (println "input-key" @input-queue key)
+  (let [prev-inpt (apply str @input-queue)
+        _ (swap! input-queue #(conj % key))
+        inpt (apply str @input-queue)
+        res (c.kana/kana-rule inpt)
+        candidate-count (if res
+                          1
+                          (->> c.kana/kana-rule
+                               (filter (fn [[key _]] (str/starts-with? key inpt)))
+                               count))]
+    (when (or res (= 0 candidate-count))
+      (reset! input-queue []))
+    (cond
+      res [{:command "delete-backward" :arguments [(count prev-inpt)]}
+           {:command "insert" :arguments [res]}]
+      (> candidate-count 0)
+      [{:command "insert" :arguments [key]}]
+      :else [{:command "delete-backward" :arguments [(count prev-inpt)]}
+             {:command "insert" :arguments [key]}])))
+
 (defn workspace--executeCommand [{:keys [params]}]
   (let [{:keys [command arguments]} params]
     (case command
       "inputKey"
       (let [[key] arguments]
-        {:result [{:command "insert" :arguments [key]}]})
+        {:result (input-key key)})
       (do
         (println "executeCommand" "unknown command" command)
         nil))))
