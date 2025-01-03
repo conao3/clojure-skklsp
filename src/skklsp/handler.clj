@@ -35,15 +35,17 @@
                           (->> c.kana/kana-rule
                                (filter (fn [[key _]] (str/starts-with? key inpt)))
                                (bounded-count 2)))]
-    (when (or res (= 0 candidate-count))
-      (reset! input-queue []))
     (cond
-      res [{:command "delete-backward" :arguments [(count prev-inpt)]}
-           {:command "insert" :arguments [res]}]
-      (> candidate-count 0)
+      (> candidate-count 1)
       [{:command "insert" :arguments [key]}]
-      :else [{:command "delete-backward" :arguments [(count prev-inpt)]}
-             {:command "insert" :arguments [key]}])))
+      res (do
+            (reset! input-queue [])
+            [{:command "delete-backward" :arguments [(count prev-inpt)]}
+             {:command "insert" :arguments [res]}])
+      :else (do
+              (reset! input-queue [key])
+              [{:command "delete-backward" :arguments [(count prev-inpt)]}
+               {:command "insert" :arguments [key]}]))))
 
 (defn workspace--executeCommand [{:keys [params]}]
   (let [{:keys [command arguments]} params]
