@@ -39,11 +39,9 @@
         {:keys [result error] :as res}
         (if fn
           (fn req)
-          (do
-            (println "Method not found:" method)
-            {:error
-             {:code METHOD_NOT_FOUND
-              :message (str "Method not found: " method)}}))]
+          {:error
+           {:code METHOD_NOT_FOUND
+            :message (str "Method not found: " method)}})]
     (when (and res id)
       (if error
         (c.subr/json-rpc-obj {:id id :error error})
