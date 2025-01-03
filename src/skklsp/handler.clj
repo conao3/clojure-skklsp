@@ -34,7 +34,7 @@
                           1
                           (->> c.kana/kana-rule
                                (filter (fn [[key _]] (str/starts-with? key inpt)))
-                               count))]
+                               (bounded-count 2)))]
     (when (or res (= 0 candidate-count))
       (reset! input-queue []))
     (cond
