@@ -38,14 +38,18 @@
     (cond
       (> candidate-count 1)
       [{:command "insert" :arguments [key]}]
-      res (do
-            (reset! input-queue [])
-            [{:command "delete-backward" :arguments [(count prev-inpt)]}
-             {:command "insert" :arguments [res]}])
-      :else (do
-              (reset! input-queue [key])
-              [{:command "delete-backward" :arguments [(count prev-inpt)]}
-               {:command "insert" :arguments [key]}]))))
+
+      (> candidate-count 0)
+      (do
+        (reset! input-queue [])
+        [{:command "delete-backward" :arguments [(count prev-inpt)]}
+         {:command "insert" :arguments [res]}])
+
+      :else
+      (do
+        (reset! input-queue [key])
+        [{:command "delete-backward" :arguments [(count prev-inpt)]}
+         {:command "insert" :arguments [key]}]))))
 
 (defn workspace--executeCommand [{:keys [params]}]
   (let [{:keys [command arguments]} params]
