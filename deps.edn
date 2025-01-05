@@ -8,6 +8,7 @@
  :aliases
  {:dev
   {:extra-paths ["dev"]
+   ;; https://nrepl.org/nrepl/installation.html#jvmti
    :jvm-opts ["-Djdk.attach.allowAttachSelf"]}
 
   :test {:extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}}

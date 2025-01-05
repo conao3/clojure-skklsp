@@ -11,7 +11,7 @@
    [java.nio.channels.spi AbstractSelector SelectorProvider])
   (:gen-class))
 
-(defn input-handler [^ByteBuffer buffer]
+(defn input-handler [^ByteBuffer buffer session-key]
   (let [header (c.subr/header-parser buffer)
         _ (println "Header:" header)
         body (when-let [len (:Content-Length header)]
@@ -21,7 +21,7 @@
       (let [parsed (json/read-str body :key-fn keyword)
             _ (println "Parsed:" parsed)
             res (when (:method parsed)
-                  (c.handler/invoke parsed))
+                  (c.handler/invoke (assoc parsed :session-key session-key)))
             _ (println "Response:" res)]
         res))))
 
@@ -54,16 +54,17 @@
 
             (. key isReadable)
             (let [^SocketChannel client-socket (. key channel)
-                  bytes-read (. client-socket read buffer)]
+                  bytes-read (. client-socket read buffer)
+                  session-key (str (. client-socket getRemoteAddress))]
               (if (neg? bytes-read)
                 (do
-                  (println "Connection Closed" (str (. client-socket getRemoteAddress)))
+                  (println "Connection Closed" session-key)
                   (. key cancel)
                   (. client-socket close))
                 (do
                   (. buffer flip)
 
-                  (when-let [res (input-handler buffer)]
+                  (when-let [res (input-handler buffer session-key)]
                     (. buffer clear)
                     (. buffer put (-> res c.subr/serialize-json c.subr/str->bytes))
                     (. buffer flip)
