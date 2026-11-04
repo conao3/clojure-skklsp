@@ -35,7 +35,8 @@
           };
 
           native = cljpkgs.mkGraalBin {
-            cljDrv = self.packages."${system}".jar;
+            cljDrv = jar;
+            src = "${jar.lib}/${jar.artifactId}-${jar.version}.jar";
           };
         };
 
